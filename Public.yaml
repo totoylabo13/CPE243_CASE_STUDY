@@ -1,0 +1,138 @@
+---
+- hosts: Public
+  connection: network_cli
+  become: true
+  gather_facts: no
+  tasks:
+
+  - name: hostname Public
+    ios_config:
+      lines:
+        - hostname Public
+      save_when: modified
+    become: yes
+    become_method: enable
+
+  - name: enable secret admin
+    ios_config:
+      lines:
+        - enable secret admin
+      save_when: modified
+    become: yes
+    become_method: enable
+
+  - name: no ip domain lookup
+    ios_config:
+      lines:
+        - no ip domain lookup
+      save_when: modified
+    become: yes
+    become_method: enable
+
+  - name: service password-encryption
+    ios_config:
+      lines:
+        - service password-encryption
+      save_when: modified
+    become: yes
+    become_method: enable
+
+  - name: line console 0
+    ios_config:
+      lines:
+        - password admin
+        - logih
+      parents:
+        - line console 0
+      save_when: modified
+    become: yes
+    become_method: enable
+
+  - name: line vty 0 15
+    ios_config:
+      lines:
+        - password admin
+        - login
+      parents:
+        - line vty 0 15
+      save_when: modified
+    become: yes
+    become_method: enable
+
+  - name: ip dhcp excluded-addresses
+    ios_config:
+      lines:
+        - ip dhcp excluded-address 192.168.3.1
+        - ip dhcp excluded-address 192.168.2.2
+        - ip dhcp excluded-address 200.200.10.1
+        - ip dhcp excluded-address 192.168.9.1
+      save_when: modified
+    become: yes
+    become_method: enable
+
+  - name: ip dhcp pool Public
+    ios_config:
+      lines:
+        - network 192.168.9.0 255.255.255.0
+        - default-router 192.168.9.1
+      parents:
+        - ip dhcp pool Public
+      save_when: modified
+    become: yes
+    become_method: enable
+
+  - name: router ospf 100
+    ios_config:
+      lines:
+        - network 192.168.3.0 0.0.0.3 area 0
+        - network 192.168.2.0 0.0.0.3 area 0
+        - network 192.168.9.0 0.0.0.255 area 0
+        - network 200.200.10.0 0.0.0.3 area 0
+      parents: 
+        - router ospf 100
+      save_when: modified
+    become: yes
+    become_method: enable
+
+  - name: ip ospf 100 area 0
+    ios_config:
+      lines:
+        - ip ospf 100 area 0
+      parents: 
+        - interface se0/1/0
+        - interface se0/1/1
+        - interface fa0/0
+        - interface fa0/1
+      save_when: modified
+    become: yes
+    become_method: enable
+
+  - name: ip access-list extended NOPUBLICACCESS
+    ios_config:
+      lines:
+        - permit ip 192.168.9.0 0.0.0.255 host 200.200.10.2
+        - deny tcp any any eq 22
+        - deny tcp any any eq 25
+        - deny tcp any any eq 53
+        - deny tcp any any eq 80
+        - deny tcp any any eq 123
+        - deny tcp any any eq 443
+        - deny udp any any eq 53
+        - deny udp any any eq 161
+        - deny udp any any eq 162
+        - permit ip any any
+      parents:
+        - ip access-list extended NOPUBLICACCESS
+      save_when: modified
+    become: yes
+    become_method: enable
+
+  - name: ip access-group NOPUBLICACCESS in
+    ios_config:
+      lines:
+        - ip access-group NOPUBLICACCESS in
+      parents:
+        - interface fa0/1
+      save_when: modified
+    become: yes
+    become_method: enable

@@ -1,0 +1,191 @@
+---
+- hosts: Department
+  connection: network_cli
+  become: true
+  gather_facts: no
+  tasks:
+
+  - name: hostname Department
+    ios_config:
+      lines:
+        - hostname Department
+      save_when: modified
+    become: yes
+    become_method: enable
+
+  - name: enable secret admin
+    ios_config:
+      lines:
+        - enable secret admin
+      save_when: modified
+    become: yes
+    become_method: enable
+
+  - name: no ip domain lookup
+    ios_config:
+      lines:
+        - no ip domain lookup
+      save_when: modified
+    become: yes
+    become_method: enable
+
+  - name: service password-encryption
+    ios_config:
+      lines:
+        - service password-encryption
+      save_when: modified
+    become: yes
+    become_method: enable
+
+  - name: line console 0
+    ios_config:
+      lines:
+        - password admin
+        - logih
+      parents:
+        - line console 0
+      save_when: modified
+    become: yes
+    become_method: enable
+
+  - name: line vty 0 15
+    ios_config:
+      lines:
+        - password admin
+        - login
+      parents:
+        - line vty 0 15
+      save_when: modified
+    become: yes
+    become_method: enable
+
+  - name: ip dhcp excluded-addresses
+    ios_config:
+      lines:
+        - ip dhcp excluded-address 192.168.1.1
+        - ip dhcp excluded-address 192.168.3.1
+        - ip dhcp excluded-address 192.168.6.1
+        - ip dhcp excluded-address 192.168.6.2
+        - ip dhcp excluded-address 192.168.7.1
+        - ip dhcp excluded-address 192.168.7.2
+        - ip dhcp excluded-address 192.168.8.1
+        - ip dhcp excluded-address 192.168.8.2
+      save_when: modified
+    become: yes
+    become_method: enable
+
+  - name: ip dhcp pool VP
+    ios_config:
+      lines:
+        - network 192.168.6.0 255.255.255.0
+        - default-router 192.168.6.1
+      parents:
+        - ip dhcp pool Security
+      save_when: modified
+    become: yes
+    become_method: enable
+
+  - name: ip dhcp pool Engg
+    ios_config:
+      lines:
+        - network 192.168.7.0 255.255.255.0
+        - default-router 192.168.7.1
+      parents:
+        - ip dhcp pool Engg
+      save_when: modified
+    become: yes
+    become_method: enable
+
+  - name: ip dhcp pool Sales
+    ios_config:
+      lines:
+        - network 192.168.8.0 255.255.255.0
+        - default-router 192.168.8.1
+      parents:
+        - ip dhcp pool Sales
+      save_when: modified
+    become: yes
+    become_method: enable
+
+  - name: router ospf 100
+    ios_config:
+      lines:
+        - network 192.168.1.0 0.0.0.3 area 0
+        - network 192.168.3.0 0.0.0.3 area 0
+        - network 192.168.6.0 0.0.0.255 area 0
+        - network 192.168.7.0 0.0.0.255 area 0
+        - network 192.168.8.0 0.0.0.255 area 0
+      parents: 
+        - router ospf 100
+      save_when: modified
+    become: yes
+    become_method: enable
+
+  - name: ip ospf 100 area 0
+    ios_config:
+      lines:
+        - ip ospf 100 area 0
+      parents: 
+        - interface se0/1/0
+        - interface se0/1/1
+        - interface fa0/0
+        - interface fa0/1
+        - interface fa0/2
+      save_when: modified
+    become: yes
+    become_method: enable
+
+  - name: ip access-list extended ADMIN
+    ios_config:
+      lines:
+        - permit ip host 200.200.10.2 any
+        - permit ip 192.168.4.0 0.0.0.7 any
+        - permit ip 192.168.5.0 0.0.0.3 any
+        - deny ip any any
+      parents:
+        - ip access-list extended ADMIN
+      save_when: modified
+    become: yes
+    become_method: enable
+
+  - name: ip access-group ADMIN out
+    ios_config:
+      lines:
+        - ip access-group ADMIN out
+      parents:
+        - interface fa0/0
+        - interface fa0/1
+        - interface fa1/0
+      save_when: modified
+    become: yes
+    become_method: enable
+
+  - name: ip access-list extended NOACCESS
+    ios_config:
+      lines:
+        - deny tcp any 192.168.4.0 0.0.0.7 eq 25
+        - deny tcp any 192.168.4.0 0.0.0.7 eq 53
+        - deny tcp any 192.168.4.0 0.0.0.7 eq 80
+        - deny tcp any 192.168.4.0 0.0.0.7 eq 123
+        - deny tcp any 192.168.4.0 0.0.0.7 eq 443
+        - deny udp any 192.168.4.0 0.0.0.7 eq 53
+        - deny udp any 192.168.4.0 0.0.0.7 eq 161
+        - deny udp any 192.168.4.0 0.0.0.7 eq 162
+        - permit ip any any
+      parents:
+        - ip access-list extended NOACCESS
+      save_when: modified
+    become: yes
+    become_method: enable
+
+  - name: ip access-group NOACCESS in
+    ios_config:
+      lines:
+        - ip access-group NOACCESS in
+      parents:
+        - interface fa0/0
+        - interface fa0/1
+        - interface fa1/0
+      save_when: modified
+    become: yes
+    become_method: enable
